@@ -5,8 +5,9 @@ class Movie {
   final String posterPath;
   final String releaseDate;
   final String mediaType;
-  final int? runtime;
-  final int? numberOfSeasons; 
+  final int? runtime; // para filmes
+  final int? numberOfSeasons; // para séries
+
   Movie({
     required this.id,
     required this.title,
@@ -29,10 +30,7 @@ class Movie {
     );
   }
 
-  Movie copyWithDetails({
-    int? runtime,
-    int? numberOfSeasons,
-  }) {
+  Movie copyWithDetails({int? runtime, int? numberOfSeasons}) {
     return Movie(
       id: id,
       title: title,

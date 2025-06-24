@@ -21,15 +21,35 @@ class MovieService {
   }
 
   static Future<Movie> fetchDetails(Movie movie) async {
-    final endpoint = movie.mediaType == 'movie'
-        ? '/movie/${movie.id}'
-        : '/tv/${movie.id}';
-
+    final endpoint = movie.mediaType == 'movie' ? '/movie/${movie.id}' : '/tv/${movie.id}';
     final data = await ApiClient.get(endpoint);
-
     return movie.copyWithDetails(
-      runtime: data['runtime'], 
-      numberOfSeasons: data['number_of_seasons'], 
+      runtime: data['runtime'],
+      numberOfSeasons: data['number_of_seasons'],
     );
+  }
+
+  static Future<List<Movie>> getPopular() async {
+    final movieData = await ApiClient.get('/movie/popular');
+    final tvData = await ApiClient.get('/tv/popular');
+
+    final movieList = (movieData['results'] as List)
+        .map((e) => Movie.fromJson({...e, 'media_type': 'movie'}))
+        .toList();
+
+    final tvList = (tvData['results'] as List)
+        .map((e) => Movie.fromJson({...e, 'media_type': 'tv'}))
+        .toList();
+
+    final combined = [...movieList, ...tvList];
+
+    combined.sort((a, b) {
+      final aYear = a.releaseDate.isNotEmpty ? int.tryParse(a.releaseDate.split('-')[0]) ?? 0 : 0;
+      final bYear = b.releaseDate.isNotEmpty ? int.tryParse(b.releaseDate.split('-')[0]) ?? 0 : 0;
+      if (aYear != bYear) return bYear.compareTo(aYear);
+      return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+    });
+
+    return combined;
   }
 }

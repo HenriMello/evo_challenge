@@ -14,15 +14,41 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _controller = TextEditingController();
   List<Movie> _movies = [];
-  bool _loading = false;
+  bool _loading = true;
+  bool _searching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPopular();
+  }
+
+  void _loadPopular() async {
+    try {
+      final results = await MovieService.getPopular();
+      setState(() {
+        _movies = results;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erro ao carregar populares: \$e')),
+      );
+    }
+  }
 
   void _search() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _searching = true;
+    });
+
     try {
       final results = await MovieService.searchMovies(_controller.text);
       setState(() => _movies = results);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: \$e')));
     } finally {
       setState(() => _loading = false);
     }
@@ -31,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar Filmes e Séries')),
+      appBar: AppBar(title: const Text('Filmes & Séries')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -40,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
               controller: _controller,
               onSubmitted: (_) => _search(),
               decoration: InputDecoration(
-                hintText: 'Digite o nome...',
+                hintText: 'Buscar por título...',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: _search,
@@ -50,9 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             if (_loading)
-              const CircularProgressIndicator()
+              const Center(child: CircularProgressIndicator())
             else if (_movies.isEmpty)
-              const Text('Nenhum resultado.')
+              const Text('Nenhum resultado encontrado.')
             else
               Expanded(
                 child: ListView.builder(
